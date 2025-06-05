@@ -25,9 +25,26 @@ app.get('/scan', async (req, res) => {
 
         await page.evaluate(axeSource);
 
-        const results = await page.evaluate(() => {
-            return axe.run();
+        // const results = await page.evaluate(() => {
+        //     return axe.run();
+        // });
+
+        const results = await page.evaluate(async () => {
+            const axeResults = await axe.run();
+            
+            return axeResults.violations.map(v => ({
+                id: v.id,
+                impact: v.impact,
+                description: v.description,
+                help: v.help,
+                helpUrl: v.helpUrl,
+                nodes: v.nodes.map(n => ({
+                html: n.html,
+                target: n.target
+                }))
+            }));
         });
+
         
         await browser.close();
         res.json(results);
