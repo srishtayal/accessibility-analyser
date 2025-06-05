@@ -23,6 +23,17 @@ function App() {
     }
   };
 
+  const getImpactBadgeColor = (impact) => {
+  switch (impact) {
+    case 'critical': return 'bg-red-600 text-white';
+    case 'serious': return 'bg-orange-500 text-white';
+    case 'moderate': return 'bg-yellow-400 text-black';
+    case 'minor': return 'bg-gray-300 text-black';
+    default: return 'bg-gray-200 text-black';
+  }
+};
+
+
   return (
     <div>
       <div className="fixed top-0 left-0 right-0 z-50 shadow-md">
@@ -58,14 +69,13 @@ function App() {
                 <li key={i} className="border p-3 rounded shadow overflow-x-auto">
                   <strong className="block text-lg">{violation.id}</strong>
                   <p className="text-sm text-gray-300">{violation.description}</p>
-                  <p className="text-sm mt-1">
-                    <span className="font-semibold text-gray-400">Impact:</span> {violation.impact || 'N/A'}{' '}
-                    {violation.helpUrl && (
-                      <>
-                        • <a href={violation.helpUrl} target="_blank" rel="noopener noreferrer" className="text-blue-300 underline">Learn More</a>
-                      </>
-                    )}
-                  </p>
+                  {violation.impact && (
+                    <span
+                      className={`inline-block px-2 py-1 rounded text-xs font-semibold mt-2 ${getImpactBadgeColor(violation.impact)}`}
+                    >
+                      {violation.impact.toUpperCase()}
+                    </span>
+                  )}
                   <ul className="ml-4 mt-2 p-2 list-disc text-sm text-red-800">
                     {violation.nodes.map((node, j) => (
                       <li key={j}>
