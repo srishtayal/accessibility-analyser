@@ -33,6 +33,17 @@ function App() {
   }
 };
 
+const copyToClipboard = (text) => {
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      alert("Copied to clipboard!");
+    })
+    .catch(err => {
+      console.error("Failed to copy text: ", err);
+      alert("Failed to copy text.");
+    });
+};
+
 
   return (
     <div>
@@ -79,9 +90,17 @@ function App() {
                   <ul className="ml-4 mt-2 p-2 list-disc text-sm text-red-800">
                     {violation.nodes.map((node, j) => (
                       <li key={j}>
-                        <code className="bg-gray-100 p-1 rounded break-words whitespace-pre-wrap inline-block">
-                          {node.html}
-                        </code>
+                        <div className="flex items-center gap-2">
+                          <code className="gap-4 bg-gray-400 my-4 p-1 rounded break-words whitespace-pre-wrap inline-block">
+                            {node.html}
+                          </code>
+                          <button
+                            onClick={() => copyToClipboard(node.html)}
+                            className="text-xs text-blue-500 hover:underline"
+                          >
+                            Copy
+                          </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
