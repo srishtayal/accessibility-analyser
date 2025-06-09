@@ -6,6 +6,7 @@ import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 import domtoimage from 'dom-to-image';
 import { jsPDF } from 'jspdf';
+import { PieChart, Pie, Cell, Legend, Tooltip } from 'recharts';
 
 function App() {
   const [url, setUrl] = useState('');
@@ -75,6 +76,50 @@ const exportPDF = () => {
     });
 };
 
+const calculateAccessibilityScore = (violations) => {
+  if (!violations || violations.length === 0) return 100;
+
+  let score = 100;
+  const weights = {
+    critical: 30,
+    serious: 20,
+    moderate: 10,
+    minor: 5,
+  };
+
+  for (const v of violations) {
+    const impact = v.impact || 'minor';
+    score -= (weights[impact] || 5);
+  }
+
+  return Math.max(0, score);
+};
+
+const getImpactDistribution = (violations) => {
+  const distribution = {
+    critical: 0,
+    serious: 0,
+    moderate: 0,
+    minor: 0,
+  };
+
+  for (const v of violations) {
+    const impact = v.impact || 'minor';
+    distribution[impact]++;
+  }
+
+  return Object.entries(distribution)
+    .filter(([_, count]) => count > 0)
+    .map(([impact, count]) => ({ name: impact, value: count }));
+};
+
+const chartColors = {
+  critical: "#DC2626",   // red-600
+  serious: "#EA580C",    // orange-500
+  moderate: "#EAB308",   // yellow-400
+  minor: "#D1D5DB",      // gray-300
+};
+
 
   return (
     <div>
@@ -105,6 +150,49 @@ const exportPDF = () => {
 
         {results && (
           <div className="mt-8 w-full">
+            <div className="mt-4 text-xl font-semibold text-center">
+              Accessibility Score: <span className="text-blue-500">{calculateAccessibilityScore(results)} / 100</span>
+              <div className="mt-2 text-sm text-gray-600 text-center">
+                The Accessibility Score is calculated based on the number and severity of issues detected. 
+                Critical and serious violations reduce the score more significantly than minor ones. 
+                A higher score indicates better accessibility compliance.
+              </div>
+            </div>
+
+            {results.length > 0 && (
+              <div className="w-full flex justify-center mt-6">
+                <PieChart width={300} height={300}>
+                  <Pie
+                    data={getImpactDistribution(results)}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) =>
+                      `${name} (${(percent * 100).toFixed(0)}%)`
+                    }
+                    outerRadius={100}
+                    dataKey="value"
+                  >
+                    {getImpactDistribution(results).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={chartColors[entry.name]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+                
+
+              </div>
+              
+            )}
+
+            <div className="mt-2 text-sm text-gray-600 mb-4 text-center">
+              The chart shows the distribution of accessibility issues by severity. 
+              This helps prioritize which types of issues need the most attention. 
+              Focus on fixing critical and serious issues first for maximum impact.
+            </div>
+
+
             <div className="flex justify-between items-center mb-4 px-2">
               <h2 className="text-xl font-semibold">
                 Issues Found: {results.length}
