@@ -4,6 +4,8 @@ import Navbar from './components/Navbar';
 import headerImage from './assets/header.webp';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
+import domtoimage from 'dom-to-image';
+import { jsPDF } from 'jspdf';
 
 function App() {
   const [url, setUrl] = useState('');
@@ -44,6 +46,35 @@ const copyToClipboard = (text) => {
     });
 };
 
+const exportJSON = (data) => {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'accessibility-report.json';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+const exportPDF = () => {
+  const node = document.getElementById('scan-results');
+  if (!node) return alert("No results to export.");
+
+  domtoimage.toPng(node)
+    .then(dataUrl => {
+      const pdf = new jsPDF();
+      const imgProps = pdf.getImageProperties(dataUrl);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save('accessibility-report.pdf');
+    })
+    .catch(error => {
+      console.error('dom-to-image error:', error);
+      alert("Failed to export PDF.");
+    });
+};
+
 
   return (
     <div>
@@ -74,8 +105,27 @@ const copyToClipboard = (text) => {
 
         {results && (
           <div className="mt-8 w-full">
-            <h2 className="text-xl font-semibold mb-4">Issues Found: {results.length}</h2>
-            <ul className="space-y-4 p-2">
+            <div className="flex justify-between items-center mb-4 px-2">
+              <h2 className="text-xl font-semibold">
+                Issues Found: {results.length}
+              </h2>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => exportJSON(results)}
+                  className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                >
+                  Export JSON
+                </button>
+                <button
+                  onClick={() => exportPDF()}
+                  className="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700"
+                >
+                  Export PDF
+                </button>
+              </div>
+            </div>
+            <ul id="scan-results" className="space-y-4 p-2">
               {results.map((violation, i) => (
                 <li key={i} className="border p-3 rounded shadow overflow-x-auto">
                   <strong className="block text-lg">{violation.id}</strong>
